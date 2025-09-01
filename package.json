@@ -1,0 +1,39 @@
+{
+  "name": "customizable-new-tab-extension",
+  "version": "1.0.0",
+  "description": "A powerful, fully customizable dashboard that replaces your default Chrome new tab",
+  "main": "newtab.html",
+  "scripts": {
+    "build": "echo 'No build process needed - this is a client-side extension'",
+    "test": "echo 'Testing should be done by loading the unpacked extension in Chrome'",
+    "lint": "echo 'Add linting tools like ESLint if desired'",
+    "format": "echo 'Add code formatting tools like Prettier if desired'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "new-tab",
+    "dashboard",
+    "customizable",
+    "productivity",
+    "widgets",
+    "favorites",
+    "bookmarks"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/customizable-new-tab-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/customizable-new-tab-extension/issues"
+  },
+  "homepage": "https://github.com/yourusername/customizable-new-tab-extension#readme",
+  "engines": {
+    "chrome": ">=88.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^2.0.0"
+  }
+}
