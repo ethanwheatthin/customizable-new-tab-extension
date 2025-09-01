@@ -384,9 +384,11 @@ class Dashboard {
         const name = document.getElementById('site-name').value.trim();
         const url = document.getElementById('site-url').value.trim();
         const icon = document.getElementById('site-icon').value.trim();
+        const groupSelect = document.getElementById('site-group');
+        const groupId = groupSelect && groupSelect.value ? Number(groupSelect.value) : null;
 
         try {
-            await window.favoritesManager.addFavorite(name, url, icon);
+            await window.favoritesManager.addFavorite(name, url, icon, groupId);
             this.closeModal(this.modals.addFavorite);
             this.showSuccess(`Added "${name}" to favorites!`);
         } catch (error) {

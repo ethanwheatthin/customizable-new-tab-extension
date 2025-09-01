@@ -671,6 +671,29 @@ body {
     right: 6px;
 }
 
+/* Quick access (free flowing row) */
+.favorites-quick {
+    margin-bottom: 12px;
+}
+
+.favorites-quick-list {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 8px 4px;
+}
+
+.favorite-item.quick {
+    min-width: 140px;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     #dashboard {

@@ -87,6 +87,7 @@ class FavoritesManager {
 
         await this.saveFavorites();
         this.renderFavorites();
+        this.renderQuickAccess();
     }
 
     async addFavorite(name, url, icon = '', groupId = null) {
@@ -165,6 +166,50 @@ class FavoritesManager {
         await Storage.setFavorites(this.favorites || []);
     }
 
+    // Provide a sensible default icon class for a site URL
+    getDefaultIcon(url) {
+        try {
+            const domain = new URL(url).hostname.toLowerCase();
+
+            const iconMap = {
+                'google.com': 'fab fa-google',
+                'youtube.com': 'fab fa-youtube',
+                'facebook.com': 'fab fa-facebook',
+                'twitter.com': 'fab fa-twitter',
+                'instagram.com': 'fab fa-instagram',
+                'linkedin.com': 'fab fa-linkedin',
+                'github.com': 'fab fa-github',
+                'stackoverflow.com': 'fab fa-stack-overflow',
+                'reddit.com': 'fab fa-reddit',
+                'wikipedia.org': 'fab fa-wikipedia-w',
+                'amazon.com': 'fab fa-amazon',
+                'paypal.com': 'fab fa-paypal',
+                'spotify.com': 'fab fa-spotify',
+                'netflix.com': 'fas fa-film',
+                'twitch.tv': 'fab fa-twitch',
+                'discord.com': 'fab fa-discord',
+                'slack.com': 'fab fa-slack',
+                'dropbox.com': 'fab fa-dropbox',
+                'microsoft.com': 'fab fa-microsoft',
+                'apple.com': 'fab fa-apple'
+            };
+
+            for (const [site, icon] of Object.entries(iconMap)) {
+                if (domain.includes(site)) return icon;
+            }
+
+            if (domain.includes('mail') || domain.includes('gmail')) return 'fas fa-envelope';
+            if (domain.includes('news') || domain.includes('cnn') || domain.includes('bbc')) return 'fas fa-newspaper';
+            if (domain.includes('shop') || domain.includes('store') || domain.includes('cart')) return 'fas fa-shopping-cart';
+            if (domain.includes('bank') || domain.includes('finance')) return 'fas fa-university';
+            if (domain.includes('weather')) return 'fas fa-cloud-sun';
+
+            return 'fas fa-globe';
+        } catch (e) {
+            return 'fas fa-globe';
+        }
+    }
+
     // Group management
     _makeGroup(name, color = null, isDefault = false) {
         return {
@@ -201,10 +246,10 @@ class FavoritesManager {
 
     async removeGroup(id) {
         // Ensure at least one group remains
-        if (this.groups.length <= 1) {
-            alert('Cannot remove the last group');
-            return false;
-        }
+        // if (this.groups.length <= 1) {
+        //     alert('Cannot remove the last group');
+        //     return false;
+        // }
 
         // Move favorites to the first group
         const target = this.groups[0].id === id ? (this.groups[1] && this.groups[1].id) : this.groups[0].id;
@@ -273,6 +318,7 @@ class FavoritesManager {
                 fav.groupId = group.id;
                 await this.saveFavorites();
                 this.renderFavorites();
+                this.renderQuickAccess();
             });
 
             // Populate favorites in this group
@@ -312,6 +358,7 @@ class FavoritesManager {
                     e.preventDefault();
                     e.stopPropagation();
                     this.removeFavorite(favorite.id);
+                    this.renderQuickAccess();
                 });
 
                 list.appendChild(item);
@@ -340,6 +387,44 @@ class FavoritesManager {
                 this.openGroupModal(newGroup.id);
             });
         }
+
+        // Ensure quick access is updated
+        this.renderQuickAccess();
+    }
+
+    // Render quick-access row
+    renderQuickAccess() {
+        const quickContainer = document.getElementById('quick-access-list');
+        if (!quickContainer) return;
+        quickContainer.innerHTML = '';
+
+        // Quick access shows favorites that are specially marked or belong to default group
+        const defaultGroupId = this.groups && this.groups[0] && this.groups[0].id;
+        const quickFavorites = (this.favorites || []).filter(f => !f.groupId || f.groupId === defaultGroupId);
+
+        quickFavorites.forEach(favorite => {
+            const item = document.createElement('a');
+            item.className = 'favorite-item quick';
+            item.href = favorite.url;
+            item.target = '_blank';
+            item.rel = 'noopener noreferrer';
+
+            item.innerHTML = `
+                <i class="${favorite.icon}"></i>
+                <div class="name">${favorite.name}</div>
+                <button class="delete-btn" title="Remove">×</button>
+            `;
+
+            const deleteBtn = item.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.removeFavorite(favorite.id);
+                this.renderFavorites();
+            });
+
+            quickContainer.appendChild(item);
+        });
     }
 
     _populateGroupSelect() {
@@ -515,6 +600,15 @@ class FavoritesManager {
 
                     const addedCount = await this.addFavoritesBulk(sites, groupId);
                     alert(`Added ${addedCount} site(s) to favorites.`);
+
+                    // Clear selections
+                    listContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                    const selectAllBox = document.getElementById('select-all-quick');
+                    if (selectAllBox) selectAllBox.checked = false;
+
+                    // Refresh UI
+                    this.renderQuickAccess();
+                    this.renderFavorites();
 
                     // Close modal
                     const modal = document.getElementById('add-favorite-modal');
