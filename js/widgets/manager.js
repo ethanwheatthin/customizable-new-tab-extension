@@ -7,7 +7,8 @@ class WidgetManager {
             clock: window.WidgetClasses?.ClockWidget,
             todo: window.WidgetClasses?.TodoWidget,
             notes: window.WidgetClasses?.NotesWidget,
-            stocks: window.WidgetClasses?.StocksWidget
+            stocks: window.WidgetClasses?.StocksWidget,
+            rss: window.WidgetClasses?.RssWidget
         };
     }
 
