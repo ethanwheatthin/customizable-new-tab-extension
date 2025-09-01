@@ -46,10 +46,80 @@ class Dashboard {
     setupEventListeners() {
         this.setupModalHandlers();
         this.setupHeaderButtons();
+        this.setupHeaderRename();
         this.setupFavoriteForm();
         this.setupWidgetSelection();
         this.setupSettingsForm();
         this.setupKeyboardShortcuts();
+    }
+
+    // Allow inline renaming of the dashboard title via double-click
+    setupHeaderRename() {
+        const titleEl = document.querySelector('.dashboard-title');
+        if (!titleEl) return;
+
+        // Make it obvious it's editable on hover
+        titleEl.style.cursor = 'text';
+
+        const startEditing = () => {
+            // Prevent multiple inputs
+            if (titleEl.dataset.editing === 'true') return;
+            titleEl.dataset.editing = 'true';
+
+            const current = titleEl.textContent || '';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'inline-title-input';
+            input.value = current;
+            input.style.minWidth = '200px';
+            input.style.fontSize = '1.25rem';
+            input.style.padding = '4px 8px';
+
+            // Replace title with input
+            titleEl.textContent = '';
+            titleEl.appendChild(input);
+            input.focus();
+            input.select();
+
+            const finish = (save) => {
+                const newVal = input.value.trim();
+                // Remove input
+                titleEl.removeChild(input);
+                titleEl.dataset.editing = 'false';
+
+                if (save && newVal) {
+                    titleEl.textContent = newVal;
+                    // Persist
+                    Storage.getSettings().then(settings => {
+                        settings.dashboardTitle = newVal;
+                        Storage.setSettings(settings);
+                    }).catch(err => console.warn('Failed to save dashboard title:', err));
+                } else {
+                    // restore previous
+                    titleEl.textContent = current;
+                }
+            };
+
+            // Save on Enter, cancel on Escape
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    finish(true);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    finish(false);
+                }
+            });
+
+            // Save on blur
+            input.addEventListener('blur', () => finish(true));
+        };
+
+        // Double-click to edit; also allow single-click when holding Ctrl
+        titleEl.addEventListener('dblclick', startEditing);
+        titleEl.addEventListener('click', (e) => {
+            if (e.ctrlKey) startEditing();
+        });
     }
 
     setupModalHandlers() {
@@ -292,10 +362,20 @@ class Dashboard {
         const themeSelect = document.getElementById('theme-select');
         const layoutSelect = document.getElementById('layout-select');
         const backgroundInput = document.getElementById('background-input');
+        const titleInput = document.getElementById('dashboard-title-input');
 
         if (themeSelect) themeSelect.value = window.themeManager.currentTheme;
         if (layoutSelect) layoutSelect.value = window.themeManager.currentLayout;
         if (backgroundInput) backgroundInput.value = window.themeManager.backgroundImage;
+
+        // Populate dashboard title from saved settings (or current DOM title as fallback)
+        if (titleInput) {
+            Storage.getSettings().then(settings => {
+                titleInput.value = settings.dashboardTitle || document.querySelector('.dashboard-title')?.textContent || 'My Dashboard';
+            }).catch(() => {
+                titleInput.value = document.querySelector('.dashboard-title')?.textContent || 'My Dashboard';
+            });
+        }
 
         this.openModal(this.modals.settings);
     }
@@ -304,6 +384,7 @@ class Dashboard {
         const themeSelect = document.getElementById('theme-select');
         const layoutSelect = document.getElementById('layout-select');
         const backgroundInput = document.getElementById('background-input');
+        const titleInput = document.getElementById('dashboard-title-input');
 
         // Apply settings
         if (themeSelect && themeSelect.value !== window.themeManager.currentTheme) {
@@ -318,6 +399,23 @@ class Dashboard {
             window.themeManager.setBackground(backgroundInput.value.trim());
         }
 
+        // Update dashboard title and persist it
+        if (titleInput) {
+            const newTitle = titleInput.value.trim();
+            if (newTitle) {
+                const titleEl = document.querySelector('.dashboard-title');
+                if (titleEl) titleEl.textContent = newTitle;
+
+                // Persist dashboardTitle in settings
+                Storage.getSettings().then(settings => {
+                    settings.dashboardTitle = newTitle;
+                    Storage.setSettings(settings);
+                }).catch(err => {
+                    console.warn('Failed to persist dashboard title:', err);
+                });
+            }
+        }
+
         this.closeModal(this.modals.settings);
         this.showSuccess('Settings saved!');
     }
@@ -325,6 +423,19 @@ class Dashboard {
     handleResetSettings() {
         if (confirm('Are you sure you want to reset all settings to default?')) {
             window.themeManager.resetToDefaults();
+
+            // Reset dashboard title to default and persist
+            const defaultTitle = 'My Dashboard';
+            const titleEl = document.querySelector('.dashboard-title');
+            if (titleEl) titleEl.textContent = defaultTitle;
+
+            Storage.getSettings().then(settings => {
+                settings.dashboardTitle = defaultTitle;
+                Storage.setSettings(settings);
+            }).catch(err => {
+                console.warn('Failed to persist reset dashboard title:', err);
+            });
+
             this.closeModal(this.modals.settings);
             this.showSuccess('Settings reset to default!');
         }

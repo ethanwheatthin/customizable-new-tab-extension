@@ -473,6 +473,23 @@ body {
     justify-content: flex-end;
 }
 
+/* Inline Title Input Styles */
+.inline-title-input {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 1.9rem;
+    font-weight: 300;
+    background: rgba(255,255,255,0.12);
+    color: white;
+    outline: none;
+}
+
+.inline-title-input:focus {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     #dashboard {
