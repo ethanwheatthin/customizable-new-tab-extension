@@ -196,9 +196,7 @@ class FavoritesManager {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                if (confirm(`Remove "${favorite.name}" from favorites?`)) {
-                    this.removeFavorite(favorite.id);
-                }
+                this.removeFavorite(favorite.id);
             });
 
             container.appendChild(item);

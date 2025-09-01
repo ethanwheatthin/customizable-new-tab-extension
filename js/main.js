@@ -179,6 +179,55 @@ class Dashboard {
         addWidgetBtn?.addEventListener('click', () => {
             this.openModal(this.modals.addWidget);
         });
+
+        // Search form handling
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const engineSelect = document.getElementById('search-engine');
+
+        const engineMap = {
+            google: 'https://www.google.com/search?q=%s',
+            bing: 'https://www.bing.com/search?q=%s',
+            duckduckgo: 'https://duckduckgo.com/?q=%s',
+            brave: 'https://search.brave.com/search?q=%s'
+        };
+
+        const isLikelyUrl = (text) => {
+            try {
+                const maybe = new URL(text);
+                return true;
+            } catch (e) {
+                // If no scheme but contains a dot and no spaces, treat as URL
+                return /\S+\.\S+/.test(text) && !/\s/.test(text);
+            }
+        };
+
+        searchForm?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const raw = (searchInput.value || '').trim();
+            if (!raw) return;
+
+            let targetUrl = '';
+
+            if (isLikelyUrl(raw)) {
+                // If user typed a URL without scheme, add https
+                try {
+                    const u = new URL(raw);
+                    targetUrl = u.href;
+                } catch (err) {
+                    targetUrl = 'https://' + raw;
+                }
+            } else {
+                const engine = engineSelect?.value || 'google';
+                const template = engineMap[engine] || engineMap.google;
+                targetUrl = template.replace('%s', encodeURIComponent(raw));
+            }
+
+            // Open in a new tab (Chrome/new tab environment will open externally)
+            window.open(targetUrl, '_blank');
+            // Optionally clear the input
+            // searchInput.value = '';
+        });
     }
 
     setupFavoriteForm() {
