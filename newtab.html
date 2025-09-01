@@ -48,12 +48,19 @@
         <section class="favorites-section">
             <div class="section-header">
                 <h2>Quick Access</h2>
-                <button id="add-favorite-btn" class="add-btn">
-                    <i class="fas fa-plus"></i> Add Site
-                </button>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="add-group-btn" class="add-btn" title="Add Group">
+                        <i class="fas fa-layer-plus"></i> Add Group
+                    </button>
+                    <button id="add-favorite-btn" class="add-btn">
+                        <i class="fas fa-plus"></i> Add Site
+                    </button>
+                </div>
             </div>
-            <div id="favorites-container" class="favorites-grid">
-                <!-- Favorites will be dynamically added here -->
+
+            <!-- Groups container: favorites will be rendered into groups here -->
+            <div id="favorites-container" class="favorites-groups">
+                <!-- Groups and favorites will be dynamically added here -->
             </div>
         </section>
 
@@ -103,6 +110,12 @@
                                 <label for="site-icon">Icon (optional):</label>
                                 <input type="text" id="site-icon" placeholder="Font Awesome class (e.g., fab fa-google)">
                             </div>
+                            <div class="form-group">
+                                <label for="site-group">Group (optional):</label>
+                                <select id="site-group">
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
                             <div class="form-actions">
                                 <button type="button" class="btn-secondary" id="cancel-favorite">Cancel</button>
                                 <button type="submit" class="btn-primary">Add Site</button>
@@ -125,6 +138,37 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Group Modal -->
+    <div id="edit-group-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Group</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="group-form">
+                    <input type="hidden" id="group-id">
+                    <div class="form-group">
+                        <label for="group-name">Group Name:</label>
+                        <input type="text" id="group-name" required placeholder="Group name">
+                    </div>
+                    <div class="form-group">
+                        <label for="group-color">Color:</label>
+                        <input type="color" id="group-color" value="#667eea">
+                        <div style="margin-top:8px; display:flex; gap:8px;">
+                            <button type="button" id="randomize-color" class="btn-secondary">Random Color</button>
+                            <button type="button" id="delete-group" class="btn-secondary" style="background:#ffe6e6; color:#b22222;">Delete Group</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary close-btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Group</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

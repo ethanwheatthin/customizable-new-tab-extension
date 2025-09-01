@@ -2,6 +2,7 @@
 class FavoritesManager {
     constructor() {
         this.favorites = [];
+        this.groups = [];
 
         // Predefined quick-add sites
         this.quickSites = [
@@ -31,14 +32,64 @@ class FavoritesManager {
             { name: 'Office', url: 'https://www.office.com/' },
             { name: 'Google Accounts', url: 'https://accounts.google.com/signin' }
         ];
+
+        // Bind modal elements for group editing
+        document.addEventListener('DOMContentLoaded', () => {
+            this.groupModal = document.getElementById('edit-group-modal');
+            this.groupForm = document.getElementById('group-form');
+            this.groupIdInput = document.getElementById('group-id');
+            this.groupNameInput = document.getElementById('group-name');
+            this.groupColorInput = document.getElementById('group-color');
+            this.randomizeColorBtn = document.getElementById('randomize-color');
+            this.deleteGroupBtn = document.getElementById('delete-group');
+
+            // Wire up form
+            this.groupForm?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveGroupFromModal();
+            });
+
+            this.randomizeColorBtn?.addEventListener('click', () => {
+                this.groupColorInput.value = this.randomColor();
+            });
+
+            // Cancel buttons inside modal
+            const cancels = Array.from(this.groupModal?.querySelectorAll('.close-btn-cancel') || []);
+            cancels.forEach(btn => btn.addEventListener('click', () => this.closeGroupModal()));
+
+            // Close X button
+            const xs = Array.from(this.groupModal?.querySelectorAll('.close-btn') || []);
+            xs.forEach(btn => btn.addEventListener('click', () => this.closeGroupModal()));
+
+            this.deleteGroupBtn?.addEventListener('click', () => {
+                const id = this.groupIdInput.value;
+                if (id && confirm('Delete this group? Favorites will be moved to the default group.')) {
+                    this.removeGroup(Number(id));
+                    this.closeGroupModal();
+                }
+            });
+        });
     }
 
     async loadFavorites() {
         this.favorites = await Storage.getFavorites();
+        this.groups = await Storage.getGroups();
+
+        // Ensure there is at least one default group
+        if (!Array.isArray(this.groups) || this.groups.length === 0) {
+            this.groups = [this._makeGroup('Ungrouped', '#5a67d8', true)];
+            await Storage.setGroups(this.groups);
+        }
+
+        // Assign any favorites missing groupId to the default group
+        const defaultId = this.groups[0].id;
+        this.favorites = (this.favorites || []).map(f => ({ ...f, groupId: f.groupId || defaultId }));
+
+        await this.saveFavorites();
         this.renderFavorites();
     }
 
-    async addFavorite(name, url, icon = '') {
+    async addFavorite(name, url, icon = '', groupId = null) {
         // Validate URL
         try {
             new URL(url);
@@ -51,11 +102,14 @@ class FavoritesManager {
             throw new Error('This site is already in your favorites');
         }
 
+        const assignedGroup = groupId || (this.groups && this.groups[0] && this.groups[0].id) || null;
+
         const favorite = {
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             name: name.trim(),
             url: url.trim(),
             icon: icon.trim() || this.getDefaultIcon(url),
+            groupId: assignedGroup,
             createdAt: new Date().toISOString()
         };
 
@@ -65,7 +119,7 @@ class FavoritesManager {
         return favorite;
     }
 
-    async addFavoritesBulk(sites) {
+    async addFavoritesBulk(sites, groupId = null) {
         // sites: array of {name, url}
         const existingUrls = new Set(this.favorites.map(f => f.url));
         const added = [];
@@ -85,6 +139,7 @@ class FavoritesManager {
                 name: (s.name || s.url).trim(),
                 url: s.url.trim(),
                 icon: this.getDefaultIcon(s.url),
+                groupId: groupId || (this.groups && this.groups[0] && this.groups[0].id),
                 createdAt: new Date().toISOString()
             };
 
@@ -107,68 +162,69 @@ class FavoritesManager {
     }
 
     async saveFavorites() {
-        await Storage.setFavorites(this.favorites);
+        await Storage.setFavorites(this.favorites || []);
     }
 
-    getDefaultIcon(url) {
-        const domain = new URL(url).hostname.toLowerCase();
-        
-        // Common site icons
-        const iconMap = {
-            'google.com': 'fab fa-google',
-            'youtube.com': 'fab fa-youtube',
-            'facebook.com': 'fab fa-facebook',
-            'twitter.com': 'fab fa-twitter',
-            'instagram.com': 'fab fa-instagram',
-            'linkedin.com': 'fab fa-linkedin',
-            'github.com': 'fab fa-github',
-            'stackoverflow.com': 'fab fa-stack-overflow',
-            'reddit.com': 'fab fa-reddit',
-            'wikipedia.org': 'fab fa-wikipedia-w',
-            'amazon.com': 'fab fa-amazon',
-            'ebay.com': 'fab fa-ebay',
-            'paypal.com': 'fab fa-paypal',
-            'spotify.com': 'fab fa-spotify',
-            'netflix.com': 'fas fa-film',
-            'twitch.tv': 'fab fa-twitch',
-            'discord.com': 'fab fa-discord',
-            'slack.com': 'fab fa-slack',
-            'dropbox.com': 'fab fa-dropbox',
-            'microsoft.com': 'fab fa-microsoft',
-            'apple.com': 'fab fa-apple'
+    // Group management
+    _makeGroup(name, color = null, isDefault = false) {
+        return {
+            id: Date.now() + Math.floor(Math.random() * 1000) + (isDefault ? 0 : Math.floor(Math.random() * 1000)),
+            name: name || 'Group',
+            color: color || this.randomColor()
         };
-
-        for (const [site, icon] of Object.entries(iconMap)) {
-            if (domain.includes(site)) {
-                return icon;
-            }
-        }
-
-        // Category-based icons
-        if (domain.includes('mail') || domain.includes('gmail')) {
-            return 'fas fa-envelope';
-        }
-        if (domain.includes('news') || domain.includes('cnn') || domain.includes('bbc')) {
-            return 'fas fa-newspaper';
-        }
-        if (domain.includes('shop') || domain.includes('store')) {
-            return 'fas fa-shopping-cart';
-        }
-        if (domain.includes('bank') || domain.includes('finance')) {
-            return 'fas fa-university';
-        }
-        if (domain.includes('weather')) {
-            return 'fas fa-cloud-sun';
-        }
-
-        return 'fas fa-globe';
     }
 
+    randomColor() {
+        // pastel random color
+        const h = Math.floor(Math.random() * 360);
+        const s = 60 + Math.floor(Math.random() * 10);
+        const l = 65 + Math.floor(Math.random() * 5);
+        return `hsl(${h} ${s}% ${l}%)`;
+    }
+
+    async createGroup(name = 'New Group', color = null) {
+        const group = this._makeGroup(name, color || this.randomColor());
+        this.groups.push(group);
+        await Storage.setGroups(this.groups);
+        this.renderFavorites();
+        return group;
+    }
+
+    async editGroup(id, updates = {}) {
+        const g = this.groups.find(x => x.id === id);
+        if (!g) return null;
+        Object.assign(g, updates);
+        await Storage.setGroups(this.groups);
+        this.renderFavorites();
+        return g;
+    }
+
+    async removeGroup(id) {
+        // Ensure at least one group remains
+        if (this.groups.length <= 1) {
+            alert('Cannot remove the last group');
+            return false;
+        }
+
+        // Move favorites to the first group
+        const target = this.groups[0].id === id ? (this.groups[1] && this.groups[1].id) : this.groups[0].id;
+        this.favorites.forEach(f => { if (f.groupId === id) f.groupId = target; });
+
+        this.groups = this.groups.filter(g => g.id !== id);
+        await Storage.setGroups(this.groups);
+        await this.saveFavorites();
+        this.renderFavorites();
+        return true;
+    }
+
+    // Render grouped favorites
     renderFavorites() {
         const container = document.getElementById('favorites-container');
+        if (!container) return;
         container.innerHTML = '';
 
-        if (this.favorites.length === 0) {
+        // Controls: if there are no favorites and no groups
+        if ((!this.favorites || this.favorites.length === 0) && this.groups.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-bookmark"></i>
@@ -178,36 +234,168 @@ class FavoritesManager {
             return;
         }
 
-        this.favorites.forEach(favorite => {
-            const item = document.createElement('a');
-            item.className = 'favorite-item slide-in';
-            item.href = favorite.url;
-            item.target = '_blank';
-            item.rel = 'noopener noreferrer';
-            
-            item.innerHTML = `
-                <i class="${favorite.icon}"></i>
-                <div class="name">${favorite.name}</div>
-                <button class="delete-btn" title="Remove">×</button>
+        // Render each group as a column
+        const groupsToRender = this.groups;
+
+        groupsToRender.forEach(group => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'favorite-group';
+            groupEl.dataset.groupId = group.id;
+
+            const header = document.createElement('div');
+            header.className = 'favorite-group-header';
+            header.innerHTML = `
+                <div class="group-title">
+                    <span class="group-color" style="background:${group.color}"></span>
+                    <span class="group-name">${group.name}</span>
+                </div>
+                <div class="group-actions">
+                    <button class="edit-group-btn" title="Edit Group"><i class="fas fa-pen"></i></button>
+                </div>
             `;
 
-            const deleteBtn = item.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', (e) => {
+            const list = document.createElement('div');
+            list.className = 'favorite-group-list';
+            list.dataset.groupId = group.id;
+
+            // Drop handlers for group
+            list.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                e.stopPropagation();
-                
-                this.removeFavorite(favorite.id);
+                list.classList.add('drag-over');
+            });
+            list.addEventListener('dragleave', () => list.classList.remove('drag-over'));
+            list.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                list.classList.remove('drag-over');
+                const id = Number(e.dataTransfer.getData('text/plain'));
+                const fav = this.favorites.find(f => f.id === id);
+                if (!fav) return;
+                fav.groupId = group.id;
+                await this.saveFavorites();
+                this.renderFavorites();
             });
 
-            container.appendChild(item);
+            // Populate favorites in this group
+            const favs = (this.favorites || []).filter(f => f.groupId === group.id);
+            if (favs.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'group-empty';
+                empty.textContent = 'No sites yet';
+                list.appendChild(empty);
+            }
+
+            favs.forEach(favorite => {
+                const item = document.createElement('a');
+                item.className = 'favorite-item';
+                item.href = favorite.url;
+                item.target = '_blank';
+                item.rel = 'noopener noreferrer';
+                item.draggable = true;
+                item.dataset.id = favorite.id;
+
+                item.innerHTML = `
+                    <i class="${favorite.icon}"></i>
+                    <div class="name">${favorite.name}</div>
+                    <button class="delete-btn" title="Remove">×</button>
+                `;
+
+                // Drag handlers
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', String(favorite.id));
+                    e.dataTransfer.effectAllowed = 'move';
+                    item.classList.add('dragging');
+                });
+                item.addEventListener('dragend', () => item.classList.remove('dragging'));
+
+                const deleteBtn = item.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.removeFavorite(favorite.id);
+                });
+
+                list.appendChild(item);
+            });
+
+            // Wire edit group button
+            header.querySelector('.edit-group-btn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openGroupModal(group.id);
+            });
+
+            groupEl.appendChild(header);
+            groupEl.appendChild(list);
+            container.appendChild(groupEl);
         });
+
+        // Update the group select in add favorite form
+        this._populateGroupSelect();
+
+        // Wire add-group button (idempotent)
+        const addGroupBtn = document.getElementById('add-group-btn');
+        if (addGroupBtn && !addGroupBtn._wired) {
+            addGroupBtn._wired = true;
+            addGroupBtn.addEventListener('click', async () => {
+                const newGroup = await this.createGroup('New Group');
+                this.openGroupModal(newGroup.id);
+            });
+        }
+    }
+
+    _populateGroupSelect() {
+        const sel = document.getElementById('site-group');
+        if (!sel) return;
+        sel.innerHTML = '';
+        this.groups.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    // Group modal helpers
+    openGroupModal(groupId) {
+        const g = this.groups.find(x => x.id === groupId);
+        if (!g) return;
+        this.groupIdInput.value = String(g.id);
+        this.groupNameInput.value = g.name;
+        // Use hex if possible, otherwise set to empty and rely on color input fallback
+        this.groupColorInput.value = this._toHex(g.color) || '#667eea';
+        this.groupModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeGroupModal() {
+        this.groupModal.classList.remove('active');
+        document.body.style.overflow = '';
+        this.groupForm.reset();
+    }
+
+    async saveGroupFromModal() {
+        const id = Number(this.groupIdInput.value);
+        const name = this.groupNameInput.value.trim() || 'Group';
+        const color = this.groupColorInput.value;
+        await this.editGroup(id, { name, color });
+        this.closeGroupModal();
+    }
+
+    _toHex(color) {
+        // If already a hex color return it; if hsl(), convert roughly to hex by creating a temp element
+        if (!color) return null;
+        if (color.startsWith('#')) return color;
+        try {
+            const ctx = document.createElement('canvas').getContext('2d');
+            ctx.fillStyle = color;
+            return ctx.fillStyle;
+        } catch {
+            return null;
+        }
     }
 
     // Import favorites from bookmarks (if permission is granted)
     async importFromBookmarks() {
         try {
-            // This would require additional permissions in manifest.json
-            // chrome.bookmarks.getTree() etc.
             alert('Bookmark import feature requires additional permissions. This is a demo implementation.');
         } catch (error) {
             console.error('Failed to import bookmarks:', error);
@@ -219,18 +407,19 @@ class FavoritesManager {
     exportFavorites() {
         const data = {
             favorites: this.favorites,
+            groups: this.groups,
             exportDate: new Date().toISOString(),
             version: '1.0'
         };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement('a');
         a.href = url;
         a.download = `favorites-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
-        
+
         URL.revokeObjectURL(url);
     }
 
@@ -239,7 +428,7 @@ class FavoritesManager {
         try {
             const text = await file.text();
             const data = JSON.parse(text);
-            
+
             if (!data.favorites || !Array.isArray(data.favorites)) {
                 throw new Error('Invalid file format');
             }
@@ -247,11 +436,27 @@ class FavoritesManager {
             // Merge with existing favorites (avoid duplicates)
             const existingUrls = new Set(this.favorites.map(f => f.url));
             const newFavorites = data.favorites.filter(f => !existingUrls.has(f.url));
-            
+
             this.favorites.push(...newFavorites);
+            // Merge groups if provided
+            if (Array.isArray(data.groups)) {
+                // Avoid duplicate group ids; if conflict, generate new id
+                const existingGroupIds = new Set(this.groups.map(g => g.id));
+                data.groups.forEach(g => {
+                    if (!existingGroupIds.has(g.id)) this.groups.push(g);
+                    else {
+                        // remap group id on imported favorites to a created group
+                        const newG = this._makeGroup(g.name, g.color);
+                        this.groups.push(newG);
+                        this.favorites.forEach(f => { if (f.groupId === g.id) f.groupId = newG.id; });
+                    }
+                });
+            }
+
+            await Storage.setGroups(this.groups);
             await this.saveFavorites();
             this.renderFavorites();
-            
+
             return newFavorites.length;
         } catch (error) {
             console.error('Failed to import favorites:', error);
@@ -305,7 +510,10 @@ class FavoritesManager {
 
                 const sites = checked.map(cb => ({ name: cb.dataset.name, url: cb.dataset.url }));
                 try {
-                    const addedCount = await this.addFavoritesBulk(sites);
+                    const groupSelect = document.getElementById('site-group');
+                    const groupId = groupSelect && groupSelect.value ? Number(groupSelect.value) : null;
+
+                    const addedCount = await this.addFavoritesBulk(sites, groupId);
                     alert(`Added ${addedCount} site(s) to favorites.`);
 
                     // Close modal

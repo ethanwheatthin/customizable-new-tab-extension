@@ -81,6 +81,14 @@ class Storage {
         return await this.set('settings', settings);
     }
 
+    static async getGroups() {
+        return await this.get('groups', []);
+    }
+
+    static async setGroups(groups) {
+        return await this.set('groups', groups);
+    }
+
     static async getWidgetData(widgetId) {
         return await this.get(`widget_${widgetId}`, {});
     }

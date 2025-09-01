@@ -570,6 +570,107 @@ body {
     box-shadow: 0 6px 20px rgba(0,0,0,0.25);
 }
 
+/* Grouped favorites styles */
+.favorites-groups {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.favorite-group {
+    min-width: 200px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.favorite-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.group-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+.group-name {
+    color: white;
+    font-weight: 600;
+}
+
+.group-actions .edit-group-btn {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: white;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.favorite-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.group-empty {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+    padding: 8px 6px;
+}
+
+.favorite-item {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: left;
+    cursor: grab;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255,255,255,0.04);
+}
+
+.favorite-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+
+.favorite-item i { font-size: 1.2rem; }
+
+.favorite-group-list.drag-over {
+    outline: 2px dashed rgba(255,255,255,0.18);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+/* make sure delete button remains small */
+.favorite-item .delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     #dashboard {
