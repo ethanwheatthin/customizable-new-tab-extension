@@ -206,6 +206,8 @@ body {
     position: relative;
     text-decoration: none;
     color: white;
+    min-height: 120px;
+    align-content: space-evenly;
 }
 
 .favorite-item:hover {
