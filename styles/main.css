@@ -357,6 +357,122 @@ body {
     font-size: 1.1rem;
 }
 
+/* Tabbed Add Favorite modal styles (uses existing color system and buttons) */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    background: #f7fafc; /* matches widget type background */
+    border: 2px solid #e2e8f0;
+    color: #2d3748;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+}
+
+.tab-btn.active {
+    background: #667eea; /* primary color */
+    color: #fff;
+    border-color: #667eea;
+    box-shadow: 0 8px 24px rgba(102,126,234,0.18);
+}
+
+.tab-panels {
+    display: block;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* Quick add list controls */
+.quick-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.quick-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.quick-controls .btn-secondary,
+.quick-controls .btn-primary {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.quick-controls .btn-secondary {
+    background: #edf2f7;
+    color: #2d3748;
+}
+
+.quick-list {
+    display: grid;
+    gap: 8px;
+    max-height: 48vh;
+    overflow: auto;
+    padding-right: 6px; /* for scrollbar breathing room */
+}
+
+.quick-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e6edf8;
+    background: #ffffff;
+}
+
+.quick-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+.quick-item .left {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1 1 auto;
+}
+
+.quick-name {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.quick-url {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+/* Make sure modal form-actions remain aligned when quick-controls present */
+.modal-body .form-actions {
+    justify-content: flex-end;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     #dashboard {
@@ -392,5 +508,22 @@ body {
     
     .widget-types {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    .quick-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .quick-controls {
+        flex-wrap: wrap;
+        gap: 8px;
     }
 }

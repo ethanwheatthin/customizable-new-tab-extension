@@ -212,6 +212,33 @@ class Dashboard {
         if (firstInput) {
             setTimeout(() => firstInput.focus(), 100);
         }
+
+        // If opening the add-favorite modal, render quick-add list and wire up tabs
+        if (modal && modal.id === 'add-favorite-modal') {
+            // Render quick list
+            try {
+                window.favoritesManager.renderQuickAddList();
+            } catch (e) {
+                console.warn('Failed to render quick add list:', e);
+            }
+
+            // Setup tab buttons inside modal (idempotent)
+            const modalEl = modal;
+            const tabBtns = modalEl.querySelectorAll('.tab-btn');
+            const panels = modalEl.querySelectorAll('.tab-panel');
+
+            tabBtns.forEach(btn => {
+                btn.onclick = () => {
+                    const target = btn.dataset.tab;
+                    tabBtns.forEach(b => b.classList.toggle('active', b === btn));
+                    panels.forEach(p => p.classList.toggle('active', p.id === target));
+
+                    // Focus first input in active panel
+                    const first = modalEl.querySelector('.tab-panel.active input, .tab-panel.active textarea, .tab-panel.active select');
+                    if (first) setTimeout(() => first.focus(), 80);
+                };
+            });
+        }
     }
 
     closeModal(modal) {

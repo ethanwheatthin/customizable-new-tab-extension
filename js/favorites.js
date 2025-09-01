@@ -2,6 +2,35 @@
 class FavoritesManager {
     constructor() {
         this.favorites = [];
+
+        // Predefined quick-add sites
+        this.quickSites = [
+            { name: 'Google', url: 'https://www.google.com/' },
+            { name: 'GitHub', url: 'https://www.github.com/' },
+            { name: 'Facebook', url: 'https://www.facebook.com/' },
+            { name: 'YouTube', url: 'https://www.youtube.com/' },
+            { name: 'Twitter', url: 'https://www.twitter.com/' },
+            { name: 'LinkedIn', url: 'https://www.linkedin.com/' },
+            { name: 'Instagram', url: 'https://www.instagram.com/' },
+            { name: 'Reddit', url: 'https://www.reddit.com/' },
+            { name: 'Microsoft', url: 'https://www.microsoft.com/' },
+            { name: 'Apple', url: 'https://www.apple.com/' },
+            { name: 'Amazon', url: 'https://www.amazon.com/' },
+            { name: 'Netflix', url: 'https://www.netflix.com/' },
+            { name: 'Gmail', url: 'https://mail.google.com/' },
+            { name: 'Drive', url: 'https://drive.google.com/' },
+            { name: 'Dropbox', url: 'https://www.dropbox.com/' },
+            { name: 'Wikipedia', url: 'https://www.wikipedia.org/' },
+            { name: 'Stack Overflow', url: 'https://www.stackoverflow.com/' },
+            { name: 'Hacker News', url: 'https://news.ycombinator.com/' },
+            { name: 'PayPal', url: 'https://www.paypal.com/' },
+            { name: 'Spotify', url: 'https://www.spotify.com/' },
+            { name: 'Twitch', url: 'https://www.twitch.tv/' },
+            { name: 'Medium', url: 'https://www.medium.com/' },
+            { name: 'Cloudflare', url: 'https://www.cloudflare.com/' },
+            { name: 'Office', url: 'https://www.office.com/' },
+            { name: 'Google Accounts', url: 'https://accounts.google.com/signin' }
+        ];
     }
 
     async loadFavorites() {
@@ -34,6 +63,41 @@ class FavoritesManager {
         await this.saveFavorites();
         this.renderFavorites();
         return favorite;
+    }
+
+    async addFavoritesBulk(sites) {
+        // sites: array of {name, url}
+        const existingUrls = new Set(this.favorites.map(f => f.url));
+        const added = [];
+
+        for (const s of sites) {
+            if (!s.url) continue;
+            if (existingUrls.has(s.url)) continue;
+
+            try {
+                new URL(s.url);
+            } catch {
+                continue; // skip invalid URLs
+            }
+
+            const fav = {
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                name: (s.name || s.url).trim(),
+                url: s.url.trim(),
+                icon: this.getDefaultIcon(s.url),
+                createdAt: new Date().toISOString()
+            };
+
+            this.favorites.push(fav);
+            added.push(fav);
+        }
+
+        if (added.length > 0) {
+            await this.saveFavorites();
+            this.renderFavorites();
+        }
+
+        return added.length;
     }
 
     async removeFavorite(id) {
@@ -194,6 +258,77 @@ class FavoritesManager {
         } catch (error) {
             console.error('Failed to import favorites:', error);
             throw new Error('Failed to import favorites: ' + error.message);
+        }
+    }
+
+    // Render quick-add list inside modal
+    renderQuickAddList() {
+        const listContainer = document.getElementById('quick-add-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '';
+
+        this.quickSites.forEach((site, idx) => {
+            const id = `quick-site-${idx}`;
+            const item = document.createElement('label');
+            item.className = 'quick-item';
+            item.setAttribute('for', id);
+            item.innerHTML = `
+                <div class="left">
+                    <input type="checkbox" data-url="${site.url}" data-name="${site.name}" id="${id}">
+                    <div class="text">
+                        <div class="quick-name">${site.name}</div>
+                        <div class="quick-url">${site.url}</div>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+
+        // Setup select all handler
+        const selectAll = document.getElementById('select-all-quick');
+        if (selectAll) {
+            selectAll.checked = false;
+            selectAll.addEventListener('change', (e) => {
+                const checked = e.target.checked;
+                listContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = checked);
+            });
+        }
+
+        // Setup add selected button
+        const addBtn = document.getElementById('add-selected-btn');
+        if (addBtn) {
+            addBtn.onclick = async () => {
+                const checked = Array.from(listContainer.querySelectorAll('input[type="checkbox"]:checked'));
+                if (checked.length === 0) {
+                    alert('Please select at least one site to add.');
+                    return;
+                }
+
+                const sites = checked.map(cb => ({ name: cb.dataset.name, url: cb.dataset.url }));
+                try {
+                    const addedCount = await this.addFavoritesBulk(sites);
+                    alert(`Added ${addedCount} site(s) to favorites.`);
+
+                    // Close modal
+                    const modal = document.getElementById('add-favorite-modal');
+                    modal && modal.classList.remove('active');
+                    document.body.style.overflow = '';
+                } catch (err) {
+                    console.error('Bulk add failed:', err);
+                    alert('Failed to add selected sites.');
+                }
+            };
+        }
+
+        // Cancel quick add
+        const cancelQuick = document.getElementById('cancel-quick');
+        if (cancelQuick) {
+            cancelQuick.onclick = () => {
+                const modal = document.getElementById('add-favorite-modal');
+                modal && modal.classList.remove('active');
+                document.body.style.overflow = '';
+            };
         }
     }
 }

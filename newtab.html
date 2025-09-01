@@ -62,24 +62,51 @@
                 <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="favorite-form">
-                    <div class="form-group">
-                        <label for="site-name">Site Name:</label>
-                        <input type="text" id="site-name" required placeholder="Google, YouTube, etc.">
+                <!-- Tab navigation -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="custom-tab">Custom</button>
+                    <button class="tab-btn" data-tab="quick-tab">Quick Add</button>
+                </div>
+
+                <!-- Tab panels -->
+                <div class="tab-panels">
+                    <!-- Custom site form (default) -->
+                    <div id="custom-tab" class="tab-panel active">
+                        <form id="favorite-form">
+                            <div class="form-group">
+                                <label for="site-name">Site Name:</label>
+                                <input type="text" id="site-name" required placeholder="Google, YouTube, etc.">
+                            </div>
+                            <div class="form-group">
+                                <label for="site-url">URL:</label>
+                                <input type="url" id="site-url" required placeholder="https://example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="site-icon">Icon (optional):</label>
+                                <input type="text" id="site-icon" placeholder="Font Awesome class (e.g., fab fa-google)">
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" id="cancel-favorite">Cancel</button>
+                                <button type="submit" class="btn-primary">Add Site</button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="form-group">
-                        <label for="site-url">URL:</label>
-                        <input type="url" id="site-url" required placeholder="https://example.com">
+
+                    <!-- Quick add panel -->
+                    <div id="quick-tab" class="tab-panel">
+                        <div class="quick-controls">
+                            <label><input type="checkbox" id="select-all-quick"> Select All</label>
+                            <div style="flex:1"></div>
+                            <button type="button" class="btn-secondary" id="cancel-quick">Cancel</button>
+                            <button type="button" class="btn-primary" id="add-selected-btn">Add Selected</button>
+                        </div>
+
+                        <div id="quick-add-list" class="quick-list">
+                            <!-- Quick sites will be rendered here -->
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="site-icon">Icon (optional):</label>
-                        <input type="text" id="site-icon" placeholder="Font Awesome class (e.g., fab fa-google)">
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" class="btn-secondary" id="cancel-favorite">Cancel</button>
-                        <button type="submit" class="btn-primary">Add Site</button>
-                    </div>
-                </form>
+                </div>
+
             </div>
         </div>
     </div>
