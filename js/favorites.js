@@ -278,8 +278,6 @@ class FavoritesManager {
         // Do NOT render the default 'Ungrouped' column. Only show group columns
         // if the user has added custom groups.
         const groupsToRender = (this.groups || []).filter(g => !g.isDefault).filter(g => g.name !== "Ungrouped");
-        console.log("🚀 ~ FavoritesManager ~ renderFavorites ~ groupsToRender:", groupsToRender)
-
         groupsToRender.forEach(group => {
             const groupEl = document.createElement('div');
             groupEl.className = 'favorite-group';
