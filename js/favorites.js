@@ -75,12 +75,6 @@ class FavoritesManager {
         this.favorites = await Storage.getFavorites();
         this.groups = await Storage.getGroups();
 
-        // Ensure there is at least one default group
-        if (!Array.isArray(this.groups) || this.groups.length === 0) {
-            this.groups = [this._makeGroup('Ungrouped', '#5a67d8', true)];
-            await Storage.setGroups(this.groups);
-        }
-
         // Assign any favorites missing groupId to the default group
         const defaultId = this.groups[0].id;
         this.favorites = (this.favorites || []).map(f => ({ ...f, groupId: f.groupId || defaultId }));
@@ -215,7 +209,8 @@ class FavoritesManager {
         return {
             id: Date.now() + Math.floor(Math.random() * 1000) + (isDefault ? 0 : Math.floor(Math.random() * 1000)),
             name: name || 'Group',
-            color: color || this.randomColor()
+            color: color || this.randomColor(),
+            isDefault: !!isDefault
         };
     }
 
@@ -279,8 +274,11 @@ class FavoritesManager {
             return;
         }
 
-        // Render each group as a column
-        const groupsToRender = this.groups;
+        // Render each custom (non-default) group as a column.
+        // Do NOT render the default 'Ungrouped' column. Only show group columns
+        // if the user has added custom groups.
+        const groupsToRender = (this.groups || []).filter(g => !g.isDefault).filter(g => g.name !== "Ungrouped");
+        console.log("🚀 ~ FavoritesManager ~ renderFavorites ~ groupsToRender:", groupsToRender)
 
         groupsToRender.forEach(group => {
             const groupEl = document.createElement('div');

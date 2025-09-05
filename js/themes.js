@@ -4,6 +4,7 @@ class ThemeManager {
         this.currentTheme = 'default';
         this.currentLayout = 'grid';
         this.backgroundImage = '';
+        this.customColor = '#667eea'; // Default custom color
     }
 
     async loadSettings() {
@@ -11,6 +12,7 @@ class ThemeManager {
         this.currentTheme = settings.theme || 'default';
         this.currentLayout = settings.layout || 'grid';
         this.backgroundImage = settings.backgroundImage || '';
+        this.customColor = settings.customColor || '#667eea';
         
         this.applyTheme();
         this.applyLayout();
@@ -21,20 +23,28 @@ class ThemeManager {
         const settings = {
             theme: this.currentTheme,
             layout: this.currentLayout,
-            backgroundImage: this.backgroundImage
+            backgroundImage: this.backgroundImage,
+            customColor: this.customColor
         };
         await Storage.setSettings(settings);
     }
 
     setTheme(theme) {
         // Remove existing theme classes
-        document.body.classList.remove('theme-default', 'theme-dark', 'theme-light', 'theme-gradient');
+        document.body.classList.remove('theme-default', 'theme-dark', 'theme-light', 'theme-gradient', 'theme-custom');
         
         // Apply new theme
         this.currentTheme = theme;
         document.body.classList.add(`theme-${theme}`);
+
+        if (theme === 'custom') {
+            this.applyCustomColor();
+        }
         
         this.saveSettings();
+
+        // Dispatch event for other parts of the app to listen to
+        document.dispatchEvent(new CustomEvent('themeApplied', { detail: { theme: this.currentTheme } }));
     }
 
     setLayout(layout) {
@@ -48,6 +58,12 @@ class ThemeManager {
         this.saveSettings();
     }
 
+    setCustomColor(color) {
+        this.customColor = color;
+        this.applyCustomColor();
+        this.saveSettings();
+    }
+
     setBackground(imageUrl) {
         this.backgroundImage = imageUrl;
         this.applyBackground();
@@ -56,10 +72,17 @@ class ThemeManager {
 
     applyTheme() {
         document.body.classList.add(`theme-${this.currentTheme}`);
+        if (this.currentTheme === 'custom') {
+            this.applyCustomColor();
+        }
     }
 
     applyLayout() {
         document.body.classList.add(`layout-${this.currentLayout}`);
+    }
+
+    applyCustomColor() {
+        document.body.style.setProperty('--custom-bg-color', this.customColor);
     }
 
     applyBackground() {
@@ -73,7 +96,7 @@ class ThemeManager {
     }
 
     cycleTheme() {
-        const themes = ['default', 'dark', 'light', 'gradient'];
+        const themes = ['default', 'dark', 'light', 'gradient', 'custom'];
         const currentIndex = themes.indexOf(this.currentTheme);
         const nextIndex = (currentIndex + 1) % themes.length;
         this.setTheme(themes[nextIndex]);
@@ -133,7 +156,8 @@ class ThemeManager {
                 { id: 'default', name: 'Default Gradient', description: 'Blue to purple gradient' },
                 { id: 'dark', name: 'Dark Mode', description: 'Dark theme for low light' },
                 { id: 'light', name: 'Light Mode', description: 'Clean white theme' },
-                { id: 'gradient', name: 'Colorful Gradient', description: 'Multi-color gradient' }
+                { id: 'gradient', name: 'Colorful Gradient', description: 'Multi-color gradient' },
+                { id: 'custom', name: 'Custom Color', description: 'Choose your own color' }
             ]
         };
     }
@@ -179,6 +203,7 @@ class ThemeManager {
         this.setTheme('default');
         this.setLayout('grid');
         this.setBackground('');
+        this.setCustomColor('#667eea');
         document.body.classList.remove('high-contrast');
     }
 }

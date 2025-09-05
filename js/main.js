@@ -46,6 +46,7 @@ class Dashboard {
     setupEventListeners() {
         this.setupModalHandlers();
         this.setupHeaderButtons();
+        this.setupThemeDropdown();
         this.setupHeaderRename();
         this.setupFavoriteForm();
         this.setupWidgetSelection();
@@ -155,11 +156,47 @@ class Dashboard {
         });
     }
 
+    setupThemeDropdown() {
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const dropdown = document.getElementById('theme-dropdown');
+
+        themeOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                const theme = option.dataset.theme;
+                window.themeManager.setTheme(theme);
+                
+                // Update active state in dropdown
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+
+                // Also update the settings modal select if it exists
+                const themeSelect = document.getElementById('theme-select');
+                if (themeSelect) {
+                    themeSelect.value = theme;
+                }
+
+                // Hide dropdown after selection
+                if (dropdown) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        });
+
+        // Set initial active state
+        document.addEventListener('themeApplied', (e) => {
+            themeOptions.forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.theme === e.detail.theme);
+            });
+        });
+    }
+
     setupHeaderButtons() {
-        // Theme toggle button
+        // Theme toggle button - now just for show, dropdown handles logic
         const themeToggle = document.getElementById('theme-toggle');
         themeToggle?.addEventListener('click', () => {
-            window.themeManager.cycleTheme();
+            const dropdown = document.getElementById('theme-dropdown');
+            dropdown?.classList.toggle('active');
         });
 
         // Settings button
@@ -414,10 +451,12 @@ class Dashboard {
         const layoutSelect = document.getElementById('layout-select');
         const backgroundInput = document.getElementById('background-input');
         const titleInput = document.getElementById('dashboard-title-input');
+        const customColorInput = document.getElementById('custom-color-input');
 
         if (themeSelect) themeSelect.value = window.themeManager.currentTheme;
         if (layoutSelect) layoutSelect.value = window.themeManager.currentLayout;
         if (backgroundInput) backgroundInput.value = window.themeManager.backgroundImage;
+        if (customColorInput) customColorInput.value = window.themeManager.customColor;
 
         // Populate dashboard title from saved settings (or current DOM title as fallback)
         if (titleInput) {
@@ -436,8 +475,13 @@ class Dashboard {
         const layoutSelect = document.getElementById('layout-select');
         const backgroundInput = document.getElementById('background-input');
         const titleInput = document.getElementById('dashboard-title-input');
+        const customColorInput = document.getElementById('custom-color-input');
 
         // Apply settings
+        if (customColorInput && customColorInput.value !== window.themeManager.customColor) {
+            window.themeManager.setCustomColor(customColorInput.value);
+        }
+
         if (themeSelect && themeSelect.value !== window.themeManager.currentTheme) {
             window.themeManager.setTheme(themeSelect.value);
         }
@@ -482,6 +526,7 @@ class Dashboard {
 
             Storage.getSettings().then(settings => {
                 settings.dashboardTitle = defaultTitle;
+                settings.customColor = '#667eea'; // Also reset custom color in storage
                 Storage.setSettings(settings);
             }).catch(err => {
                 console.warn('Failed to persist reset dashboard title:', err);
